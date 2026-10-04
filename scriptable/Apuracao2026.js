@@ -73,7 +73,7 @@ const titulo = (s) =>
   String(s ?? "").toLowerCase().replace(/(^|\s|-)(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
 
 function lerParametro(texto) {
-  const tokens = String(texto ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  const tokens = String(texto ?? "").toLowerCase().normalize("NFD").replace(/\p{M}/gu, "")
     .split(/[\s,;/]+/).filter(Boolean);
   const p = { cargo: CARGOS.presidente, uf: null, turno: null, demo: false };
   for (const t of tokens) {
