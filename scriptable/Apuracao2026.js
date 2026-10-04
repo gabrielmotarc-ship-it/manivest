@@ -526,6 +526,7 @@ h1{font-size:13px;letter-spacing:.06em;color:var(--ok);margin:0 0 4px;display:fl
 .apur span{color:var(--sv);font-size:14px}
 .trilho{height:8px;border-radius:4px;background:var(--tr);overflow:hidden}.trilho i{display:block;height:100%;border-radius:4px;transition:width .8s}
 .meta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 12px;color:var(--sv);font-size:12px;margin:8px 0 14px}
+.conf{flex-basis:100%}
 .aviso{background:var(--al);color:#fff;border-radius:10px;padding:8px 12px;font-size:13px;margin-bottom:12px}
 .card{background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:10px;display:grid;
 grid-template-columns:52px 1fr auto;gap:4px 12px;align-items:center}
@@ -549,10 +550,10 @@ font-weight:600;font-size:14px;background:var(--card);color:var(--tx)}.btns a.pr
 <h1><span class="vivo"></span><span id="tit">APURAÇÃO AO VIVO</span></h1>
 <div class="apur"><b id="ap">–</b><span>das urnas apuradas</span></div>
 <div class="trilho"><i id="bar" style="width:0;background:var(--ok)"></i></div>
-<div class="meta"><span id="sec"></span><span id="cont"></span></div>
+<div class="meta"><span id="sec"></span><span id="cont"></span><span id="conf" class="conf"></span></div>
 <div id="av"></div><div id="lista"></div><div id="dif" class="dif"></div><div id="tot" class="tot"></div>
 <div class="btns"><a class="pri" href="app://atualizar">Atualizar agora</a><a href="app://globo">Abrir no O Globo</a></div>
-<div class="fonte">Dados oficiais: resultados.tse.jus.br · atualiza sozinho a cada <span id="int"></span>&nbsp;s</div>
+<div class="fonte">Dados oficiais: resultados.tse.jus.br · confere sozinho a cada <span id="int"></span>&nbsp;s. O TSE divulga as parciais em lotes: os números só mudam quando sai uma divulgação nova.</div>
 <script>
 var restante=0,intervalo=30;
 function pct(n,c){return n.toLocaleString('pt-BR',{minimumFractionDigits:c==null?2:c,maximumFractionDigits:c==null?2:c})+'%'}
@@ -580,9 +581,10 @@ function render(d,seg){
   document.getElementById('dif').textContent=a&&b?'Diferença entre 1º e 2º: '+pct(a.pct-b.pct).replace('%',' p.p.')+' · '+num(a.votos-b.votos)+' votos':'';
   document.getElementById('tot').innerHTML=d.candidatos.length?'<div>Brancos<b>'+num(d.brancos)+'</b></div><div>Nulos<b>'+num(d.nulos)+'</b></div><div>Abstenção<b>'+pct(d.abstencao||0,1)+'</b></div>':'';
   document.getElementById('cont').dataset.hora=d.atualizado?new Date(d.atualizado).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo'}):'';
+  document.getElementById('conf').textContent='TSE divulgou às '+(document.getElementById('cont').dataset.hora||'–')+' · conferido às '+new Date().toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo'});
   tique();
 }
-function tique(){var e=document.getElementById('cont');e.textContent=(e.dataset.hora?'TSE '+e.dataset.hora+' · ':'')+'próxima em '+Math.max(0,restante)+'s'}
+function tique(){document.getElementById('cont').textContent='nova conferência em '+Math.max(0,restante)+'s'}
 setInterval(function(){restante--;tique()},1000);
 </script></body></html>`;
 
