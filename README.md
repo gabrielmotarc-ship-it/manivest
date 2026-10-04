@@ -61,8 +61,11 @@ o pequeno, os 2 primeiros.
   "Offline".
 - As fotos oficiais dos candidatos vêm do TSE e ficam guardadas no aparelho; sem foto, aparece um
   círculo com as iniciais na cor do partido.
-- O widget pede atualização a cada minuto, mas **quem decide a frequência é o iOS** (normalmente a
-  cada 5–15 min). Para acompanhar em tempo real, toque no widget: o painel ao vivo se atualiza
-  sozinho a cada 30 s enquanto estiver aberto.
+- **Quem decide quando o widget atualiza é o iOS**, com uma cota de recargas por dia (na prática,
+  de 15 em 15 min ou mais, e menos ainda com o Modo de Pouca Energia ligado). O rodapé mostra
+  `TSE hh:mm` (hora do dado) e `widget ↻ hh:mm` (última vez que o iOS rodou o widget). Para
+  acompanhar em tempo real, toque no widget: o painel ao vivo se atualiza a cada 30 s.
+- Para o iOS atualizar com mais frequência: deixe o **Modo de Pouca Energia desligado** e a
+  **Atualização em 2º Plano** ligada para o Scriptable (Ajustes › Geral › Atualização em 2º Plano).
 
 Projeto independente, sem vínculo com o TSE nem com o O Globo.

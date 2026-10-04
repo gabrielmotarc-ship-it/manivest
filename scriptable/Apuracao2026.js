@@ -28,8 +28,11 @@ const CONFIG = {
   },
   linkGlobo:
     "https://infograficos.oglobo.globo.com/politica/eleicoes-2026/apuracao-resultado-ao-vivo-2026.html#/presidente?tipo=apuracao&turno=1",
-  // O iOS decide quando recarregar o widget; isto é só o pedido mínimo.
-  atualizarACadaMin: 1,
+  // O iOS decide quando recarregar o widget (cota de ~40–70 recargas por dia);
+  // pedir menos que isso não faz o iOS atualizar mais vezes.
+  atualizarACadaMin: 5,
+  // Data do 2º turno: antes dela não vale a pena consultar os arquivos do 2º turno.
+  segundoTurno: new Date("2026-10-25T00:00:00-03:00"),
   // Intervalo de atualização do painel ao vivo (app aberto).
   painelACadaSeg: 30,
 };
@@ -100,6 +103,9 @@ function urlResultado(eleicao, abrangencia, cargo) {
 
 // ------------------------------------------------------------ acesso ao TSE
 
+const emWidget = config.runsInWidget || config.runsInAccessoryWidget;
+const hora = (d) => d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+
 const fm = FileManager.local();
 const pastaCache = fm.joinPath(fm.cacheDirectory(), "apuracao2026");
 if (!fm.fileExists(pastaCache)) fm.createDirectory(pastaCache, true);
@@ -121,7 +127,8 @@ function gravarCache(chave, valor) {
 /** GET com User-Agent de navegador (o CDN do TSE recusa clientes sem ele). */
 async function baixarJson(url) {
   const req = new Request(url);
-  req.timeoutInterval = 15;
+  // O widget tem pouco tempo para rodar: se o TSE demorar, usa o último dado salvo.
+  req.timeoutInterval = emWidget ? 8 : 15;
   req.headers = {
     "User-Agent":
       "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
@@ -213,8 +220,8 @@ async function carregarApuracao(p) {
   try {
     const eleicoes = await descobrirEleicoes();
     const codigos = eleicoes[p.cargo.pleito];
-    // Sem turno fixo, tenta o 2º e volta ao 1º enquanto o 2º não existir.
-    const turnos = p.turno ? [p.turno] : [2, 1];
+    // Sem turno fixo, tenta o 2º (a partir da data dele) e volta ao 1º enquanto o 2º não existir.
+    const turnos = p.turno ? [p.turno] : Date.now() >= CONFIG.segundoTurno.getTime() ? [2, 1] : [1];
     for (const t of turnos) {
       if (!codigos[t]) continue;
       const bruto = await baixarJson(urlResultado(codigos[t], abr, p.cargo.codigo));
@@ -369,15 +376,11 @@ function rodape(w, d, pequeno) {
   const linha = w.addStack();
   linha.centerAlignContent();
   if (d.aviso) texto(linha, d.aviso, 9, { cor: C.alerta, encolher: 0.7 });
+  else if (d.atualizado) texto(linha, `TSE ${hora(new Date(d.atualizado))}`, 9, { cor: C.suave });
   else texto(linha, "Fonte: TSE", 9, { cor: C.suave });
   linha.addSpacer();
-  if (d.atualizado) {
-    if (!pequeno) texto(linha, "atualizado ", 9, { cor: C.suave });
-    const h = linha.addDate(d.atualizado);
-    h.applyTimeStyle();
-    h.font = Font.systemFont(9);
-    h.textColor = C.suave;
-  }
+  // Hora em que o iOS rodou o widget pela última vez.
+  texto(linha, `${pequeno ? "↻" : "widget ↻"} ${hora(new Date())}`, 9, { cor: C.suave });
 }
 
 /**
@@ -481,7 +484,8 @@ function widgetBloqueio(d, familia) {
     texto(s, fmtPct(d.apurado, 0), 13, { numero: true, encolher: 0.6 }).centerAlignText();
     texto(s, "apurado", 8, { encolher: 0.6 }).centerAlignText();
   } else {
-    texto(w, `🗳 ${fmtPct(d.apurado, 1)} apurado`, 11, { negrito: true, encolher: 0.7 });
+    const topo = d.atualizado ? ` · TSE ${hora(new Date(d.atualizado))}` : "";
+    texto(w, `🗳 ${fmtPct(d.apurado, 1)} apurado${topo}`, 11, { negrito: true, encolher: 0.7 });
     for (const c of d.candidatos.slice(0, 2)) {
       const l = w.addStack();
       texto(l, c.nome, 12, { encolher: 0.6 });
@@ -616,10 +620,10 @@ async function painelAoVivo(p) {
 
 // -------------------------------------------------------------------- main
 
-const parametro = lerParametro(args.widgetParameter || args.queryParameters.p);
+const parametro = lerParametro(args.widgetParameter || (args.queryParameters || {}).p);
 const familia = config.widgetFamily || "medium";
 
-if (config.runsInWidget || config.runsInAccessoryWidget) {
+if (emWidget) {
   const dados = parametro.demo ? dadosDemo(parametro) : await carregarApuracao(parametro);
   const w = familia.startsWith("accessory") ? widgetBloqueio(dados, familia) : await widgetTela(dados, familia);
   w.refreshAfterDate = new Date(Date.now() + CONFIG.atualizarACadaMin * 60 * 1000);
